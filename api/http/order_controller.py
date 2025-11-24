@@ -1,6 +1,6 @@
 from flask import request
 from services.order_service import OrderService
-from api.responses import OrderResponse, ApiResponse
+from api.http.responses import OrderResponse, ApiResponse
 
 
 class OrderController:
