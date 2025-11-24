@@ -1,0 +1,46 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "orders-api"
+version = "1.0.0"
+description = "API para gerenciamento de fila de pedidos"
+readme = "README.md"
+requires-python = ">=3.8"
+dependencies = [
+    "flask>=2.0.0",
+    "flask-cors>=3.0.0",
+    "pydantic>=2.0.0",
+    "requests>=2.28.0",
+    "pytest>=7.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest-cov>=4.0.0",
+    "black>=23.0.0",
+    "flake8>=6.0.0",
+]
+
+[tool.setuptools]
+packages = ["domain", "infrastructure", "services", "api", "api.controllers", "scripts"]
+package-dir = {"" = "."}
+
+[tool.setuptools.package-data]
+"*" = ["*.py"]
+
+[tool.black]
+line-length = 100
+target-version = ['py38', 'py39', 'py310', 'py311']
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+
+[project.scripts]
+setup-env = "scripts.setup_env:setup_environment"
+run-tests = "scripts.run_tests:run_tests"
+
