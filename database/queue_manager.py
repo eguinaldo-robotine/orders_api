@@ -1,6 +1,6 @@
 from typing import Optional, List
 from collections import deque
-from domain.models import Order
+from models.models import Order
 
 
 class QueueManager:

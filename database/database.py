@@ -1,6 +1,6 @@
 import sqlite3
 from typing import List, Optional
-from domain.models import Order, Product
+from models.models import Order, Product
 
 
 class Database:
@@ -103,7 +103,7 @@ class Database:
     def _row_to_order(self, row) -> Optional[Order]:
         try:
             import json
-            from domain.models import Product, Order
+            from models.models import Product, Order
             
             order_id, box, status, size, products_json = row
             products_data = json.loads(products_json)

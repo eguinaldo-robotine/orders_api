@@ -1,7 +1,7 @@
 from typing import Optional
-from domain.models import Order
-from infrastructure.database import Database
-from infrastructure.queue_manager import QueueManager
+from models.models import Order
+from database.database import Database
+from database.queue_manager import QueueManager
 
 
 class OrderService:

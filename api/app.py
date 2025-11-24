@@ -7,8 +7,8 @@ sys.path.insert(0, str(root_dir))
 from flask import Flask
 from flask_cors import CORS
 
-from infrastructure.database import Database
-from infrastructure.queue_manager import QueueManager
+from database.database import Database
+from database.queue_manager import QueueManager
 from services.order_service import OrderService
 from api.http.order_controller import OrderController
 from api.http.routes import register_routes
