@@ -1,5 +1,5 @@
 from typing import List
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class Syrup(BaseModel):
@@ -13,6 +13,8 @@ class Topping(BaseModel):
 
 
 class Product(BaseModel):
+    model_config = ConfigDict(extra='allow')
+    
     id: int = -1
     cup: int = -1
     type: str = "ice cream"
