@@ -1,6 +1,9 @@
 import sqlite3
 from typing import List, Optional
 from models.models import Order, Product
+from utils.logger import get_logger
+
+logger = get_logger(__name__)
 
 
 class Database:
@@ -8,13 +11,16 @@ class Database:
     DATABASE_NAME = 'order_log.db'
     
     def __init__(self):
+        logger.debug(f"Inicializando Database com arquivo: {self.DATABASE_NAME}")
         self._ensure_table_exists()
+        logger.debug("Tabela Orders verificada/criada com sucesso")
     
     def _get_connection(self):
         conn = sqlite3.connect(self.DATABASE_NAME)
         return conn
     
     def _ensure_table_exists(self):
+        logger.debug("Verificando existência da tabela Orders")
         conn = self._get_connection()
         cursor = conn.cursor()
         cursor.execute('''
@@ -30,33 +36,56 @@ class Database:
         ''')
         conn.commit()
         conn.close()
+        logger.debug("Tabela Orders garantida")
     
     def insert(self, order: Order) -> None:
-        conn = self._get_connection()
-        cursor = conn.cursor()
+        logger.debug(f"Inserindo pedido no banco: ID={order.id}, Box={order.box}, Status={order.status}")
         
-        products_json = self._serialize_products(order.products)
-        cursor.execute(
-            'INSERT INTO Orders (id, box, status, size, products, is_synced) VALUES (?, ?, ?, ?, ?, 0)',
-            (order.id, order.box, order.status, order.size, products_json)
-        )
-        conn.commit()
-        conn.close()
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            
+            products_json = self._serialize_products(order.products)
+            cursor.execute(
+                'INSERT INTO Orders (id, box, status, size, products, is_synced) VALUES (?, ?, ?, ?, ?, 0)',
+                (order.id, order.box, order.status, order.size, products_json)
+            )
+            conn.commit()
+            conn.close()
+            logger.info(f"Pedido inserido no banco com sucesso: ID={order.id}")
+        except sqlite3.Error as e:
+            logger.error(f"Erro ao inserir pedido {order.id} no banco: {str(e)}", exc_info=True)
+            raise
     
     def update(self, order: Order) -> None:
-        conn = self._get_connection()
-        cursor = conn.cursor()
+        logger.debug(f"Atualizando pedido no banco: ID={order.id}, Status={order.status}")
         
-        products_json = self._serialize_products(order.products)
-        cursor.execute('''
-            UPDATE Orders
-            SET box = ?, status = ?, size = ?, products = ?, is_synced = 0
-            WHERE id = ?
-        ''', (order.box, order.status, order.size, products_json, order.id))
-        conn.commit()
-        conn.close()
+        try:
+            conn = self._get_connection()
+            cursor = conn.cursor()
+            
+            products_json = self._serialize_products(order.products)
+            cursor.execute('''
+                UPDATE Orders
+                SET box = ?, status = ?, size = ?, products = ?, is_synced = 0
+                WHERE id = ?
+            ''', (order.box, order.status, order.size, products_json, order.id))
+            
+            rows_affected = cursor.rowcount
+            conn.commit()
+            conn.close()
+            
+            if rows_affected > 0:
+                logger.debug(f"Pedido atualizado no banco: ID={order.id}, Linhas afetadas={rows_affected}")
+            else:
+                logger.warning(f"Nenhuma linha afetada ao atualizar pedido: ID={order.id}")
+        except sqlite3.Error as e:
+            logger.error(f"Erro ao atualizar pedido {order.id} no banco: {str(e)}", exc_info=True)
+            raise
     
     def get_by_id(self, order_id: int) -> Optional[Order]:
+        logger.debug(f"Buscando pedido no banco: ID={order_id}")
+        
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -69,15 +98,21 @@ class Database:
             
             row = cursor.fetchone()
             if row:
-                return self._row_to_order(row)
-            return None
+                order = self._row_to_order(row)
+                logger.debug(f"Pedido encontrado no banco: ID={order_id}, Status={order.status if order else 'None'}")
+                return order
+            else:
+                logger.debug(f"Pedido não encontrado no banco: ID={order_id}")
+                return None
         except sqlite3.Error as e:
-            print(f"[Database] Error getting order {order_id}: {e}")
+            logger.error(f"Erro ao buscar pedido {order_id} no banco: {str(e)}", exc_info=True)
             return None
         finally:
             conn.close()
     
     def get_pending(self) -> List[Order]:
+        logger.debug("Buscando pedidos pendentes no banco de dados")
+        
         conn = self._get_connection()
         cursor = conn.cursor()
         
@@ -93,9 +128,11 @@ class Database:
                 order = self._row_to_order(row)
                 if order:
                     orders.append(order)
+            
+            logger.info(f"Encontrados {len(orders)} pedidos pendentes no banco")
             return orders
         except sqlite3.Error as e:
-            print(f"[Database] Error getting pending orders: {e}")
+            logger.error(f"Erro ao buscar pedidos pendentes: {str(e)}", exc_info=True)
             return []
         finally:
             conn.close()
@@ -117,7 +154,7 @@ class Database:
                 products=products
             )
         except Exception as e:
-            print(f"[Database] Error converting row to order: {e}")
+            logger.error(f"Erro ao converter row para Order: {str(e)}", exc_info=True)
             return None
     
     def _serialize_products(self, products: List[Product]) -> str:
