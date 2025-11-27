@@ -59,8 +59,18 @@ def register_routes(app: Flask, controller: OrderController):
         logger.debug(f"GET /order/status - Status: {response[1]}")
         return response
     
+    @app.route('/queue/status', methods=['GET'])
+    def get_queue_status():
+        """Exibe o estado atual da fila no console e retorna informações em JSON"""
+        logger.info(f"GET /queue/status - IP: {request.remote_addr}")
+        _display_queue_state(controller)
+        return ApiResponse.success(
+            data={"message": "Queue state displayed in console"},
+            message="Queue state displayed successfully"
+        )
     
     @app.errorhandler(404)
     def not_found(e):
+        logger.warning(f"404 - Endpoint não encontrado: {request.path} - IP: {request.remote_addr}")
         return ApiResponse.not_found(message="Endpoint not found")
 

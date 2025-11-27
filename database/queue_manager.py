@@ -55,11 +55,43 @@ class QueueManager:
             return False
     
     def get_by_id(self, order_id: int) -> Optional[Order]:
-        return self._orders_by_id.get(order_id)
+        order = self._orders_by_id.get(order_id)
+        return order
     
     def is_empty(self) -> bool:
         return len(self._queue) == 0
     
     def size(self) -> int:
         return len(self._queue)
+    
+    def get_all_orders(self) -> List[Order]:
+        """Retorna uma lista com todos os pedidos na fila na ordem atual"""
+        return list(self._queue)
+    
+    def get_queue_state(self) -> str:
+        """
+        Retorna uma representação visual do estado atual da fila.
+        Mostra posição, ID, Box e Status de cada pedido.
+        """
+        if len(self._queue) == 0:
+            return "\n" + "="*60 + "\n  FILA VAZIA - Nenhum pedido aguardando\n" + "="*60 + "\n"
+        
+        lines = []
+        lines.append("\n" + "="*60)
+        lines.append(f"  ESTADO DA FILA - Total: {len(self._queue)} pedido(s)")
+        lines.append("="*60)
+        lines.append(f"{'Pos.':<6} {'ID':<8} {'Box':<6} {'Status':<12} {'Produtos':<10}")
+        lines.append("-"*60)
+        
+        for position, order in enumerate(self._queue, start=1):
+            order_id = order.id if order.id != -1 else "N/A"
+            box = order.box if order.box != -1 else "N/A"
+            status = order.status
+            products_count = len(order.products)
+            
+            lines.append(f"{position:<6} {order_id:<8} {box:<6} {status:<12} {products_count:<10}")
+        
+        lines.append("="*60 + "\n")
+        
+        return "\n".join(lines)
 
